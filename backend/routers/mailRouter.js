@@ -1,35 +1,49 @@
 import { Router } from "express"
 import nodemailer from "nodemailer"
 
-const router = Router() 
+const router = Router()
 
-// Configure the transporter
-// For dev, we use Ethereal (fake email). For real: use Gmail/Outlook settings
+//ethereal
 const transporter = nodemailer.createTransport({
     host: 'smtp.ethereal.email',
     port: 587,
     auth: {
-        user: 'joshua.stokes@ethereal.email',
+        user: 'jj@ethereal.email',
         pass: '5R1XgK8X2tZqQz1y1A'
     }
-}) 
+})
 
-router.post("/api/send-welcome", async (req, res) => {
-    const { email } = req.body 
+router.post("/api/send-email", async (req, res) => {
+    const { email, type } = req.body;
+    
+    let subject = "Notification";
+    let text = "This is an alert.";
+
+    if (type === "signup") {
+        subject = "Welcome to the system!"
+        text = "Thanks for signing up. We are glad to have you."
+    } else if (type === "first_login") {
+        subject = "Security Alert: First Login"
+        text = "We noticed your first login to the system."
+    }
 
     try {
-        await transporter.sendMail({
-            from: '"Node Course" <admin@nodecourse.com>',
+        const info = await transporter.sendMail({
+            from: '"Node System" <no-reply@system.com>',
             to: email,
-            subject: "Welcome!",
-            text: "Welcome to our platform. You have successfully signed up.",
-            html: "<b>Welcome to our platform.</b> You have successfully signed up."
-        }) 
-        res.send({ message: "Email sent" }) 
-    } catch (error) {
-        console.error(error) 
-        res.status(500).send({ message: "Failed to send email" }) 
-    }
-}) 
+            subject: subject,
+            text: text,
+            html: `<b>${text}</b>`
+        })
 
-export default router 
+        //logs the fake email URL
+        console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info))
+        
+        res.send({ message: "Email sent" })
+    } catch (error) {
+        console.error("Email Error:", error)
+        res.status(500).send({ message: "Failed to send email" })
+    }
+})
+
+export default router

@@ -1,62 +1,64 @@
-import { Router } from "express" 
-import bcrypt from "bcrypt" 
-import db from "../database/connection.js" 
+import { Router } from "express"
+import { comparePassword, hashedPassword } from "../util/encryption.js"
+import { getDb } from "../database/connection.js"
 
-const router = Router() 
+const router = Router()
 
-//signup
 router.post("/api/signup", async (req, res) => {
-    const { email, password } = req.body 
+    const db = await getDb()
+    const { email, password } = req.body
 
-    //check if user exists
-    const userExists = await db.get("SELECT * FROM users WHERE email = ?", [email]) 
+    const userExists = await db.get("SELECT * FROM users WHERE email = ?", [email])
+    
     if (userExists) {
-        return res.status(400).send({ message: "User already exists" }) 
+        return res.status(400).send({ message: "User already exists" })
     }
 
-    //hash password
-    const hashedPassword = await bcrypt.hash(password, 12) 
+    const hashedPwd = await hashedPassword(password)
 
-    //save user
-    const result = await db.run("INSERT INTO users (email, password) VALUES (?, ?)", [email, hashedPassword]) 
+    const result = await db.run("INSERT INTO users (email, password, login_count) VALUES (?, ?, 0)", [email, hashedPwd])
 
-    // Send the welcome email (internal fetch or direct function call)
-    // For simplicity, we assume the frontend triggers the email or we do it here.
-    res.send({ message: "User created", id: result.lastID }) 
-}) 
+    res.send({ message: "User created", id: result.lastID })
+})
 
-//login
 router.post("/api/login", async (req, res) => {
-    const { email, password } = req.body 
+    const db = await getDb()
+    const { email, password } = req.body;
 
     const user = await db.get("SELECT * FROM users WHERE email = ?", [email]) 
     
     if (!user) {
-        return res.status(400).send({ message: "Invalid credentials" }) 
+        return res.status(400).send({ message: "Invalid credentials" })
     }
 
-    const isSame = await bcrypt.compare(password, user.password) 
+    const isSame = await comparePassword(password, user.password)
+
     if (!isSame) {
-        return res.status(400).send({ message: "Invalid credentials" }) 
+        return res.status(400).send({ message: "Invalid credentials" })
     }
 
-    req.session.user = { id: user.id, email: user.email } 
-    res.send({ message: "Logged in", user: req.session.user }) 
-}) 
+    const isFirstLogin = (user.login_count === 0)
 
-//logout
+    await db.run("UPDATE users SET login_count = login_count + 1 WHERE id = ?", [user.id])
+
+    req.session.user = { id: user.id, email: user.email }
+    
+    res.send({ message: "Logged in", user: req.session.user, isFirstLogin })
+})
+
+
 router.post("/api/logout", (req, res) => {
     req.session.destroy(() => {
-        res.send({ message: "Logged out" }) 
-    }) 
-}) 
+        res.send({ message: "Logged out" })
+    })
+})
 
 router.get("/api/auth-check", (req, res) => {
     if (req.session.user) {
-        res.send({ user: req.session.user }) 
+        res.send({ user: req.session.user })
     } else {
-        res.status(401).send({ message: "Not logged in" }) 
+        res.status(401).send({ message: "Not logged in" })
     }
-}) 
+})
 
-export default router 
+export default router

@@ -36,6 +36,16 @@
     }
   })
 
+  //email
+  async function sendEmailTrigger(type) {
+    await fetch("http://localhost:8080/api/send-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, type }),
+        credentials: "include"
+    });
+  }
+
   //signup
   async function handleSignup() {
     const res = await fetch("http://localhost:8080/api/signup", {
@@ -48,6 +58,7 @@
     const data = await res.json()
     if (res.ok) {
       toastr.success("Account created. Check your email!", "Success")
+      await sendEmailTrigger("signup")
     } else {
       toastr.error(data.message, "Signup failed")
     }
@@ -66,6 +77,14 @@
     if (res.ok) {
       $user = data.user
       toastr.success("Welcome back!", "Login Successful")
+
+      //check first time login
+      if (data.isFirstLogin) {
+          console.log("First time login detected. Sending email...");
+          await sendEmailTrigger("first_login");
+          toastr.info("We sent a security alert to your email.", "First Login");
+      }
+
     } else {
       toastr.error(data.message, "Login Failed")
     }
