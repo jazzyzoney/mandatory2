@@ -1,7 +1,7 @@
-import { Router } from "express";
-import nodemailer from "nodemailer";
+import { Router } from "express"
+import nodemailer from "nodemailer"
 
-const router = Router();
+const router = Router() 
 
 // Configure the transporter
 // For dev, we use Ethereal (fake email). For real: use Gmail/Outlook settings
@@ -12,10 +12,10 @@ const transporter = nodemailer.createTransport({
         user: 'joshua.stokes@ethereal.email',
         pass: '5R1XgK8X2tZqQz1y1A'
     }
-});
+}) 
 
 router.post("/api/send-welcome", async (req, res) => {
-    const { email } = req.body;
+    const { email } = req.body 
 
     try {
         await transporter.sendMail({
@@ -24,12 +24,12 @@ router.post("/api/send-welcome", async (req, res) => {
             subject: "Welcome!",
             text: "Welcome to our platform. You have successfully signed up.",
             html: "<b>Welcome to our platform.</b> You have successfully signed up."
-        });
-        res.send({ message: "Email sent" });
+        }) 
+        res.send({ message: "Email sent" }) 
     } catch (error) {
-        console.error(error);
-        res.status(500).send({ message: "Failed to send email" });
+        console.error(error) 
+        res.status(500).send({ message: "Failed to send email" }) 
     }
-});
+}) 
 
-export default router;
+export default router 
