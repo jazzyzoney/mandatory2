@@ -1,11 +1,11 @@
 <script>
-  import { onMount } from "svelte";
-  import { user } from "./stores/userStore.js";
-  import toastr from 'toastr';
-  import 'toastr/build/toastr.min.css';
+  import { onMount } from "svelte"
+  import { user } from "./stores/userStore.js"
+  import toastr from 'toastr'
+  import 'toastr/build/toastr.min.css'
 
-  let email = "";
-  let password = "";
+  let email = ""
+  let password = ""
 
   onMount(async () => {
     toastr.options = {
@@ -24,17 +24,17 @@
       "hideEasing": "linear",
       "showMethod": "fadeIn",
       "hideMethod": "fadeOut"
-    };
+    }
     try {
-      const res = await fetch("http://localhost:8080/api/auth-check", { credentials: "include" });
+      const res = await fetch("http://localhost:8080/api/auth-check", { credentials: "include" })
       if (res.ok) {
-        const data = await res.json();
-        $user = data.user;
+        const data = await res.json()
+        $user = data.user
       }
     } catch (e) {
-      console.log("Not logged in");
+      console.log("Not logged in")
     }
-  });
+  })
 
   //signup
   async function handleSignup() {
@@ -43,13 +43,13 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
       credentials: "include"
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
     if (res.ok) {
-      toastr.success("Account created. Check your email!", "Success");
+      toastr.success("Account created. Check your email!", "Success")
     } else {
-      toastr.error(data.message, "Signup failed");
+      toastr.error(data.message, "Signup failed")
     }
   }
 
@@ -60,22 +60,22 @@
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ email, password }),
       credentials: "include"
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
     if (res.ok) {
-      $user = data.user;
-      toastr.success("Welcome back!", "Login Successful");
+      $user = data.user
+      toastr.success("Welcome back!", "Login Successful")
     } else {
-      toastr.error(data.message, "Login Failed");
+      toastr.error(data.message, "Login Failed")
     }
   }
 
   //logout
   async function handleLogout() {
-    await fetch("http://localhost:8080/api/logout", { method: "POST", credentials: "include" });
+    await fetch("http://localhost:8080/api/logout", { method: "POST", credentials: "include" })
     $user = null;
-    toastr.info("You have been logged out", "Goodbye");
+    toastr.info("You have been logged out", "Goodbye")
   }
 </script>
 
